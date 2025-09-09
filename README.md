@@ -1,2 +1,0 @@
-# webcodefetch
-# USE THIS TOOL UNDER YOUR RISK
