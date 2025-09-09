@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Website Code Extractor</title>
+
+    <!-- Prism.js CSS for Syntax Highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+    <style>
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark {
+            background-color: #1e1e2f;
+            color: #f1f1f1;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 60px auto;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            width: 70%;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            outline: none;
+        }
+
+        button {
+            padding: 15px 25px;
+            font-size: 16px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            background-color: #007aff;
+            color: white;
+            margin-left: 10px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #005bb5;
+        }
+
+        .toggle-wrapper {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .toggle-label {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 28px;
+        }
+
+        .toggle-switch input {
+            display: none;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            background-color: #ccc;
+            border-radius: 34px;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            transition: .4s;
+        }
+
+        .slider::before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            border-radius: 50%;
+            transition: .4s;
+        }
+
+        input:checked + .slider {
+            background-color: #007aff;
+        }
+
+        input:checked + .slider::before {
+            transform: translateX(22px);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .terminal-window {
+            background-color: #2d2d2d;
+            border-radius: 10px;
+            text-align: left;
+            margin: 20px 0;
+            padding: 20px;
+            position: relative;
+        }
+
+        body.light .terminal-window {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 10px;
+        }
+
+        .circles {
+            display: flex;
+            gap: 8px;
+            margin-left: 10px;
+        }
+
+        .circle {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .circle.red {
+            background-color: #ff5f56;
+        }
+
+        .circle.yellow {
+            background-color: #ffbd2e;
+        }
+
+        .circle.green {
+            background-color: #27c93f;
+        }
+
+        .copy-button {
+            background-color: #007aff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .footer-text {
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        .footer-text a {
+            color: #007aff;
+            text-decoration: none;
+        }
+
+        .warning-box {
+            background-color: rgba(255, 0, 0, 0.7);
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .code-label {
+            color: #00d8ff;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: block;
+            font-size: 1.1em;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-x: auto;
+            font-size: 14px;
+            border-radius: 5px;
+            padding: 15px;
+        }
+
+        body.light pre {
+            background-color: #eaeaea;
+            color: #333;
+        }
+
+        /* Modal Styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 400px;
+            font-weight: bold;
+            font-size: 18px;
+            color: #d32f2f;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="toggle-wrapper">
+        <span class="toggle-label">Dark Mode</span>
+        <label class="toggle-switch">
+            <input type="checkbox" onchange="toggleMode()" />
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <div class="container">
+        <h1>Website Code Extractor</h1>
+
+        <div id="url-input-area">
+            <input type="text" id="urlInput" placeholder="https://example.com" />
+            <button onclick="fetchWebsiteCode()">Fetch Code</button>
+
+            <div class="footer-text">
+                &copy; All Rights Reserved. By <a href="https://dhairyacode.github.io" target="_blank">Dhairya</a>
+            </div>
+
+            <div class="warning-box">
+                ⚠️ Use this tool under your risk! The owner is not responsible for your actions.
+            </div>
+        </div>
+
+        <div id="result-area" class="hidden">
+            <button onclick="resetInput()">CRACK CODE AGAIN</button>
+
+            <div class="terminal-window">
+                <div class="terminal-header">
+                    <div class="circles">
+                        <span class="circle red"></span>
+                        <span class="circle yellow"></span>
+                        <span class="circle green"></span>
+                    </div>
+                    <button class="copy-button" onclick="copyCode('htmlCode')">Copy HTML</button>
+                </div>
+                <span class="code-label">HTML Code</span>
+                <pre><code id="htmlCode" class="language-markup">Loading...</code></pre>
+            </div>
+
+            <div class="terminal-window">
+                <div class="terminal-header">
+                    <div class="circles">
+                        <span class="circle red"></span>
+                        <span class="circle yellow"></span>
+                        <span class="circle green"></span>
+                    </div>
+                    <button class="copy-button" onclick="copyCode('cssCode')">Copy CSS</button>
+                </div>
+                <span class="code-label">CSS Code</span>
+                <pre><code id="cssCode" class="language-css">Loading...</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Popup -->
+    <div id="accessDeniedModal" class="modal">
+        <div class="modal-content">
+            ⚠️ You are not allowed to fetch code of this site.
+        </div>
+    </div>
+
+    <!-- Prism.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+
+    <script>
+        function toggleMode() {
+            document.body.classList.toggle('dark');
+        }
+
+        function resetInput() {
+            document.getElementById('urlInput').value = '';
+            document.getElementById('url-input-area').classList.remove('hidden');
+            document.getElementById('result-area').classList.add('hidden');
+            document.getElementById('htmlCode').textContent = '';
+            document.getElementById('cssCode').textContent = '';
+        }
+
+        function copyCode(elementId) {
+            const code = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('Code copied to clipboard!');
+            });
+        }
+
+        async function fetchWebsiteCode() {
+            const url = document.getElementById('urlInput').value.trim();
+            if (!url) {
+                alert('Please enter a valid URL.');
+                return;
+            }
+
+            if (url.includes('https://dhairyacode.github.io')) {
+                showAccessDeniedModal();
+                return;
+            }
+
+            document.getElementById('url-input-area').classList.add('hidden');
+            document.getElementById('result-area').classList.remove('hidden');
+            document.getElementById('htmlCode').textContent = 'Loading...';
+            document.getElementById('cssCode').textContent = 'Loading...';
+
+            try {
+                const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error('Failed to fetch URL.');
+
+                const data = await response.json();
+                const htmlContent = data.contents;
+                document.getElementById('htmlCode').textContent = htmlContent;
+
+                const cssMatches = [...htmlContent.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)];
+                const cssCombined = cssMatches.map(match => match[1]).join('\n\n') || 'No inline CSS found.';
+                document.getElementById('cssCode').textContent = cssCombined;
+
+                Prism.highlightAll();
+            } catch (err) {
+                document.getElementById('htmlCode').textContent = 'Error: ' + err.message;
+                document.getElementById('cssCode').textContent = 'Error fetching CSS.';
+            }
+        }
+
+        function showAccessDeniedModal() {
+            const modal = document.getElementById('accessDeniedModal');
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 4000);
+        }
+    </script>
+</body>
+
+</html>
